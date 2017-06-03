@@ -1,0 +1,73 @@
+﻿@model newsFeelsWeb.Models.NewsItem
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<style>
+/*
+    body {
+        background-image: url("@Html.DisplayFor(model => model.ImageURL)");
+            background-repeat: no-repeat;
+            background-position: left top;
+            background-attachment: fixed;
+    }
+    */
+</style>
+
+<h2>Details</h2>
+<div>
+    <img src="@Html.DisplayFor(model => model.ImageURL)"/>
+</div>
+    <div>
+        <h4>NewsItem</h4>
+        <hr />
+        <dl class="dl-horizontal">
+            <dt>
+                @Html.DisplayNameFor(model => model.Title)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Title)
+            </dd>
+
+            <dt>
+                @Html.DisplayNameFor(model => model.Content)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Content) <small><a href="@Html.DisplayFor(model => model.StoryURL)" target="_blank">more</a></small>
+            </dd>
+
+            <dt>
+                @Html.DisplayNameFor(model => model.Sentiment)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Sentiment)
+            </dd>
+            <dt>
+                @Html.DisplayNameFor(model => model.Timestamp)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Timestamp)
+            </dd>
+        </dl>
+    </div>
+<p>
+    @{
+        if ((string)TempData["Referrer"] == "Home")
+        {
+            @Html.ActionLink("Back to Home", "Index", "Home");
+        }
+        else if ((string)TempData["Referrer"] == "NewsItem")
+        {
+            @Html.ActionLink("Back to all items", "Index");
+        }
+        else
+        {
+            @Html.ActionLink("Back to List", "Index");
+        }
+    }
+</p>

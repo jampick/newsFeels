@@ -1,0 +1,504 @@
+﻿@model IEnumerable<newsFeelsWeb.Models.NewsItem>
+@{
+    ViewBag.Title = "Home Page";
+    TempData["Referrer"] = "Home";
+    double goodSentimentFloor = 75;
+    double badSentimentCeiling = 25;
+    double goodRating = 100;
+    double badRating = 0;
+    var imageSrc = "";
+    var imageSize = 0;
+}
+
+<script type="text/javascript" src="~/Scripts/fusioncharts.js"></script>
+<script type="text/javascript" src="~/Scripts/themes/fusioncharts.theme.fint.js"></script>
+<!--show this smaller version of gauge for small devices-->
+<script type="text/javascript">
+FusionCharts.ready(function () {
+    var csatGauge = new FusionCharts({
+        "type": "angulargauge",
+        "renderAt": "chart-container-small",
+        "width": "100%",
+        "height": "100%",
+        "dataFormat": "json",
+        "dataSource":{
+               "chart": {
+                  "caption": "NewsFeels-o-meter",
+                  "subcaption": "for @DateTime.Now.ToShortDateString()",
+                  "lowerLimit": "0",
+                  "upperLimit": "100",
+                  "valueBelowPivot": "1",
+                  "showGaugeBorder": "0",
+                  "showValue": "1",
+                  "autoScale": "1",
+                  "theme": "ocean"
+               },
+               "colorRange": {
+                  "color": [
+                     {
+                        "minValue": "0",
+                        "maxValue": "@badSentimentCeiling",
+                        "code": "#e44a00"
+                     },
+                     {
+                        "minValue": "@badSentimentCeiling",
+                        "maxValue": "@goodSentimentFloor",
+                        "code": "#f8bd19"
+                     },
+                     {
+                        "minValue": "@goodSentimentFloor",
+                        "maxValue": "100",
+                        "code": "#6baa01"
+                     }
+                  ]
+               },
+               "dials": {
+                  "dial": [
+                     {
+                         "value": "@ViewBag.Today"
+                     }
+                  ]
+               },
+            "trendpoints": {
+                "point": [
+                    {
+                        "startValue": "@ViewBag.YTD",
+                        "useMarker": "1",
+                        "markerColor": "#F1f1f1",
+                        "markerBorderColor": "#666666",
+                        "markerRadius": "10",
+                        "markerTooltext": "This year's average was @ViewBag.YTD",
+                        "displayValue": "YTD avg @ViewBag.YTD",
+                        "color": "#555555",
+                        "thickness": "2",
+                        "alpha": "100"
+                    }
+                ]
+            },
+            "annotations": {
+                "origw": "450",
+                "origh": "300",
+                "autoscale": "1",
+                "showBelow": "0",
+                "groups": [{
+                    "id": "arcs",
+                    "items": [{
+                        "id": "low-sentiment-text",
+                        "type": "Text",
+                        "color": "#555555",
+                        "label": "Low sentiment",
+                        "fontSize": "10",
+                        "align": "left",
+                        "x": "$chartCenterX - 200",
+                        "y": "$chartEndY - 30"
+                    }, {
+                        "id": "high-sentiment-text",
+                        "type": "Text",
+                        "color": "#555555",
+                        "label": "High sentiment",
+                        "fontSize": "10",
+                        "align": "right",
+                        "x": "$chartCenterX + 200",
+                        "y": "$chartEndY - 30"
+                    }]
+                }]
+            }
+
+            }
+      });
+
+    csatGauge.render();
+});
+</script>
+<!--show this for all but small devices-->
+<script type="text/javascript">
+FusionCharts.ready(function () {
+    var csatGauge = new FusionCharts({
+        "type": "angulargauge",
+        "renderAt": "chart-container",
+        "width": "100%",
+        "height": "100%",
+        "dataFormat": "json",
+        "dataSource":{
+               "chart": {
+                  "caption": "NewsFeels-o-meter",
+                  "subcaption": "for @DateTime.Now.ToShortDateString()",
+                  "lowerLimit": "0",
+                  "upperLimit": "100",
+                  "valueBelowPivot": "1",
+                  "showGaugeBorder": "0",
+                  "showValue": "1",
+                  "autoScale": "1",
+                  "theme": "ocean"
+               },
+               "colorRange": {
+                  "color": [
+                     {
+                        "minValue": "0",
+                        "maxValue": "@badSentimentCeiling",
+                        "code": "#e44a00"
+                     },
+                     {
+                        "minValue": "@badSentimentCeiling",
+                        "maxValue": "@goodSentimentFloor",
+                        "code": "#f8bd19"
+                     },
+                     {
+                        "minValue": "@goodSentimentFloor",
+                        "maxValue": "100",
+                        "code": "#6baa01"
+                     }
+                  ]
+               },
+               "dials": {
+                  "dial": [
+                     {
+                         "value": "@ViewBag.Today"
+                     }
+                  ]
+               },
+            "trendpoints": {
+                "point": [
+                    {
+                        "startValue": "@ViewBag.YTD",
+                        "useMarker": "1",
+                        "markerColor": "#F1f1f1",
+                        "markerBorderColor": "#666666",
+                        "markerRadius": "10",
+                        "markerTooltext": "This year's average was @ViewBag.YTD",
+                        "displayValue": "YTD avg @ViewBag.YTD",
+                        "color": "#555555",
+                        "thickness": "2",
+                        "alpha": "100"
+                    }
+                ]
+            },
+            "annotations": {
+                "origw": "450",
+                "origh": "300",
+                "autoscale": "1",
+                "showBelow": "0",
+                "groups": [{
+                    "id": "arcs",
+                    "items": [{
+                        "id": "low-sentiment-text",
+                        "type": "Text",
+                        "color": "#555555",
+                        "label": "Low sentiment",
+                        "fontSize": "10",
+                        "align": "left",
+                        "x": "$chartCenterX - 200",
+                        "y": "$chartEndY - 30"
+                    }, {
+                        "id": "high-sentiment-text",
+                        "type": "Text",
+                        "color": "#555555",
+                        "label": "High sentiment",
+                        "fontSize": "10",
+                        "align": "right",
+                        "x": "$chartCenterX + 200",
+                        "y": "$chartEndY - 30"
+                    }]
+                }]
+            }
+
+            }
+      });
+
+    csatGauge.render();
+});
+</script>
+
+<!--    history chart-->
+@{ 
+    var sentimentHistory = this.ViewBag.dateSentiment as Dictionary<DateTime, List<double>>;
+}
+<script type="text/javascript">
+    FusionCharts.ready(function () {
+        var fusioncharts = new FusionCharts({
+            type: 'line',
+            renderAt: 'chart-container-history',
+            width: '100%',
+            height: '100%',
+            dataFormat: 'json',
+            dataSource: {
+                "chart": {
+                    "caption": "NewsFeels History",
+                    "subCaption": "Last 30 days",
+                    "xAxisName": "Day",
+                    "yAxisName": "NewsFeel-o-meter",
+                    "showValues": "0",
+                    "theme": "ocean",
+
+                    //Cosmetics
+
+                },
+
+                "data": [
+@{
+    foreach (var item in sentimentHistory.OrderBy(c => c.Key))
+    {
+
+        if (DateTime.Now.ToShortDateString() == item.Key.ToShortDateString())
+        {
+                        <text>
+                        {
+                            "label": "@item.Key.ToShortDateString()",
+                            "value": "@Math.Round(ViewBag.Today, 0)"
+                        },
+                        </text>
+
+                    }
+                    else
+                    {
+                        <text>
+                        {
+                            "label": "@item.Key.ToShortDateString()",
+                            "value": "@Math.Round(item.Value.Average(), 0)"
+                        },
+                        </text>
+                    }  // end of else
+            } // end of foreach
+}
+                ],
+                "trendlines": [{
+                    "line": [{
+                        "startvalue": "@ViewBag.YTD",
+                        "color": "#1aaf5d",
+                        "displayvalue": "YTD avg{br}@ViewBag.YTD",
+                        "valueOnRight": "1",
+                        "thickness": "2"
+                    }]
+                }]
+            }
+        }
+    );
+        fusioncharts.render();
+    });
+
+</script>
+
+<div class="row page-header" id="top">
+    <h1>NewsFeels<small> - How does your news feel today?</small></h1>
+</div>
+<div class="row">
+    <!--show this for all but small devices-->
+    <div class="col-md-3 hidden-xs hidden-sm text-center" id="chart-container" style="height: 250px; width: 400px">
+        <p>Today's NewsFeels-o-meter: @ViewBag.Today</p>
+        <p>Average: @ViewBag.YTD</p>
+    </div>
+     <!--show this smaller version of gauge for small devices-->
+    <div class="col-sm-4 col-xs-4 visible-xs visible-sm hidden-lg hidden-md text-center" id="chart-container-small"  style="height: 170px; width: 240px">
+        <p>Today's NewsFeels-o-meter: @ViewBag.Today</p>
+        <p>Average: @ViewBag.YTD</p>
+    </div>
+
+    <!--history chart-->
+    <div class="row col-md-8 col-sm-10 col-xs-10 text-center" id="chart-container-history"   style="height: 250px;">
+        <p>NewsFeels-o-meter history</p>
+   </div>
+</div>
+<hr />
+    <div class="row">
+        <div class="col-md-4 col-md-offset-4 btn-group-sm text-center visible-sm visible-xs">
+            <a href="#bad" class="btn btn-default">Bring the pain!</a>
+            <a href="#meh" class="btn btn-default">Meh?</a>
+            <a href="#good" class="btn btn-default">Keep it positive.</a>
+        </div>
+    </div>
+
+    <!--filters here-->
+    @{
+        var providers = this.ViewBag.providers as Dictionary<string, List<double>>;
+        var categories = this.ViewBag.categories as Dictionary<string, List<double>>;
+    }
+    <div class="row">
+        <div class="col-md-12">
+            <div class="list-group">
+
+                Sources: @Html.ActionLink("All", "Index", "Home") <span class="badge">@Math.Round(ViewBag.allSentimentAverage, 0)%</span>
+                @{
+                    foreach (var item in providers)
+                    {
+                        <a href="/home/index?providerSearch=@item.Key">@item.Key <span class="badge">@Math.Round(@item.Value.Average(), 0)%</span></a>
+                        //@Html.ActionLink(@item.Key, "Index", "Home", new { @providerSearch = @item.Key }, null) <span class="badge">@item.Value</span>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="list-group">
+                Categories: @Html.ActionLink("All", "Index", "Home") <span class="badge">@Math.Round(ViewBag.allSentimentAverage, 0)%</span>
+                @{
+                    foreach (var item in categories)
+                    {
+                        <a href="/home/index?categorySearch=@item.Key">@item.Key <span class="badge">@Math.Round(@item.Value.Average(), 0)%</span></a>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div id="bad" class="col-md-4">
+            <h2>Bring the pain!</h2>
+            <h3>Low sentimant stories ahead, read on.</h3>
+            @createNewsItemTable("bad", Model.Reverse().ToList(), badSentimentCeiling, goodSentimentFloor, goodRating, badRating, imageSize, imageSrc)
+        </div>
+        <div id="meh" class="col-md-4">
+            <h2>Meh?</h2>
+            <h3>Stories here are bland like weak tea.</h3>
+            @createNewsItemTable("meh", Model.ToList(), badSentimentCeiling, goodSentimentFloor, goodRating, badRating, imageSize, imageSrc)
+        </div>
+        <div id="good" class="col-md-4">
+            <h2>Keep it positive.</h2>
+            <h3>
+                News here is trying to be good.
+            </h3>
+            @createNewsItemTable("good", Model.ToList(), badSentimentCeiling, goodSentimentFloor, goodRating, badRating, imageSize, imageSrc)
+        </div>
+    </div>
+    <div class="navbar navbar-fixed-bottom col-md-1 col-md-offset-11 hidden-sm hidden-xs">
+        <a href="#top" class="btn btn-default">back to top</a>
+    </div>
+
+    @*helpers here*@
+    @helper createNewsItemTable(string colType, List<newsFeelsWeb.Models.NewsItem> thisModel, double badSentimentCeiling, double goodSentimentFloor, double goodRating, double badRating, int imageSize, string imageSrc)
+    {
+    <div class="table-condensed">
+        @{
+            var myList = thisModel;
+            bool createdRow = false;
+
+            foreach (var item in myList)
+            {
+                double sentiment = Math.Round(item.Sentiment, 2) * 100;
+
+                string itemDate;
+                try
+                {
+                    itemDate = item.DatePublished.ToString("yyyy-MM-dd hh:mm tt");
+                }
+                catch (Exception e)
+                {
+                    itemDate = item.Timestamp.ToString("yyyy-MM-dd");
+                    ViewBag.latestExcpetion = e.Message;
+                }
+                #region ugly break/continue crap I want to hide
+                if (sentiment < goodSentimentFloor && colType == "good")
+                {
+
+                    break;
+                }
+
+                if (sentiment > goodSentimentFloor && colType == "meh")
+                {
+
+                    continue;
+                }
+
+                if (sentiment < badSentimentCeiling && colType == "meh")
+                {
+
+                    break;
+                }
+
+                if (sentiment > badSentimentCeiling && colType == "bad")
+                {
+
+                    break;
+                }
+
+                #endregion
+
+                createdRow = true;
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="thumbnail">
+                            <img src="@Html.Encode(item.ImageURL)" />
+                        </div>
+                    </div>
+                    <div class="col-md-6 h4">
+                        @Html.DisplayFor(modelItem => item.Title)
+                    </div>
+                </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            @Html.DisplayFor(modelItem => item.Content)
+                            <small>
+                                <a href="@Html.DisplayFor(modelItem => item.StoryURL)" target="_blank">more</a>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        @{
+                            if (sentiment >= goodRating)
+                            {
+                                imageSrc = "/Content/good.png";
+                                imageSize = 20;
+                            }
+
+                            else if (sentiment <= badRating)
+                            {
+                                imageSrc = "/Content/bad.png";
+                                imageSize = 20;
+                            }
+
+                            else
+                            {
+                                imageSrc = "";
+                                imageSize = 0;
+                            }
+                        }
+                        <div class="col-md-12">
+                            <small>
+                                NewsFeels-o-meter <span class="badge">@sentiment%</span>
+                                <!--<img src=@imageSrc height="@imageSize" width="@imageSize" />-->
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <small>
+                                @itemDate
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <small>
+                                @item.Provider
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <small>
+                                @item.Category
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div>
+                            <a href="#top" class="btn btn-default visible-xs visible-sm">back to top</a>
+                        </div>
+                    </div>
+                    <hr />
+
+                            }
+        }
+
+        @{
+            //create empty row here if no other rows were created
+            if (createdRow == false)
+            {
+                <div class="row">No stories in this sentiment range.  Move along.</div>
+            }
+        }
+
+    </div>
+
+}

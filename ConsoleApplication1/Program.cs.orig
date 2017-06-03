@@ -1,0 +1,214 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Net.Http.Headers;
+using System.Net.Http;
+using System.Web;
+using Newtonsoft.Json;
+using Microsoft.Azure; // Namespace for CloudConfigurationManager
+using Microsoft.WindowsAzure.Storage; // Namespace for CloudStorageAccount
+using Microsoft.WindowsAzure.Storage.Table; // Namespace for Table storage types
+using System.Diagnostics;
+using Microsoft.Azure.WebJobs;
+
+namespace feeler
+{
+    class Program
+    {
+        public static string NEWSSEARCH_KEY = "9482747b6592418cbd0ffd863ccc24ca";
+        public static string TEXTANALYTICS_KEY = "c7a18a97fbfe448aadf796fc02b2221a";
+        public static string MAXSTORYCOUNT = "10";
+        public static double SLEEPTIME = 3600000;//3600000
+        public static double UPDATECOUNT = 60;
+        static void Main(string[] args)
+        {
+            while (true)
+            {
+                //List<string> headlines = new List<string>();
+                newsItems headlines = new newsItems();
+
+                try
+                {
+                    //get news headlines
+                    Console.WriteLine("Getting news headlines...");
+                    Task<newsItems> t = GetNews("Top News");
+                    t.Wait();
+                    headlines = t.Result;
+
+                    //get sentimate - happy, meh, sucky
+                    Console.WriteLine("Detecting feels...");
+                    t = GetSentiment(headlines);
+                    t.Wait();
+                    headlines = t.Result;
+
+                    //save data
+                    Console.WriteLine("Save feeling for later...");
+                    saveData(headlines);
+
+                    //list headlines and sentimate
+                    Console.WriteLine("Show feels...");
+                    showData();
+                }
+                catch (Exception e)
+                {
+                    Console.Write("ERROR: {0}", e.Message);
+                }
+
+                int pokeCount = 0;
+                Console.WriteLine("sleeping until {0}", DateTime.Now.AddMilliseconds(SLEEPTIME).ToLongTimeString());
+                while (pokeCount < UPDATECOUNT)
+                    {
+                        pokeCount++;
+                        double sleepCount = Math.Round((SLEEPTIME / UPDATECOUNT), 0);
+                        Console.WriteLine("pulse {0} ({1} of {2})", DateTime.Now.AddMilliseconds(sleepCount).ToLongTimeString(), pokeCount, UPDATECOUNT);
+                        System.Threading.Thread.Sleep((int)sleepCount);
+                    }
+                //Console.WriteLine("Hit ENTER to exit...");
+                //Console.ReadLine();
+            }
+        }
+        
+        private static void showData() 
+        {
+            // Retrieve the storage account from the connection string.
+#if DEBUG            
+            CloudStorageAccount storageAccount = CloudStorageAccount.DevelopmentStorageAccount;
+#else
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(
+                CloudConfigurationManager.GetSetting("StorageConnectionString"));
+#endif
+            // Create the table client.
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+
+            // Create the CloudTable object that represents the "people" table.
+            CloudTable table = tableClient.GetTableReference("newsItems");
+
+            // Construct the query operation for all customer entities where PartitionKey="Smith".
+            TableQuery<newsItem> query = new TableQuery<newsItem>().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "newsFeels"));
+
+            // Print the fields for each customer.
+            foreach (newsItem entity in table.ExecuteQuery(query))
+            {
+                Console.WriteLine("{0}, {1}\t{2}\t{3}", entity.PartitionKey, entity.RowKey,
+                    entity.Title, entity.Sentiment.ToString());
+            }
+        }
+
+        private static void saveData(newsItems headlines)
+        {
+            // Parse the connection string and return a reference to the storage account.
+#if DEBUG            
+            CloudStorageAccount storageAccount = CloudStorageAccount.DevelopmentStorageAccount;
+#else
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(
+                CloudConfigurationManager.GetSetting("StorageConnectionString"));
+#endif
+            // Create the table client.
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+
+            // Retrieve a reference to the table.
+            CloudTable table = tableClient.GetTableReference("newsItems");
+
+            // Create the table if it doesn't exist.
+            table.CreateIfNotExists();
+
+            // Create the batch operation.
+            TableBatchOperation batchOperation = new TableBatchOperation();
+
+            // Create the TableOperation object that inserts the customer entity.
+            foreach (newsItem item in headlines.NewsItems)
+            {
+                batchOperation.InsertOrReplace(item);
+            }
+            // Execute the insert operation.
+            table.ExecuteBatch(batchOperation);
+            
+            
+        }
+
+        //private static async Task<List<string>> GetNews(string topic)
+        private static async Task<newsItems> GetNews(string topic)
+        {
+            //List<string> headlines = new List<string>();
+            newsItems headlines = new newsItems();
+            var client = new HttpClient();
+            var queryString = HttpUtility.ParseQueryString(string.Empty);
+
+            // Request headers
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", NEWSSEARCH_KEY);
+
+            // Request parameters
+            queryString["q"] = topic;
+            queryString["count"] = MAXSTORYCOUNT;
+            queryString["offset"] = "0";
+            queryString["mkt"] = "en-us";
+            queryString["safeSearch"] = "Off";
+            queryString["freshness"] = "Day";
+            var uri = "https://api.cognitive.microsoft.com/bing/v5.0/news/search?" + queryString;
+
+            dynamic response = await client.GetAsync(uri);
+            dynamic content = await response.Content.ReadAsStringAsync();
+
+            searchResult mySearchResult = JsonConvert.DeserializeObject<searchResult>(content);
+            foreach(Value value in mySearchResult.value)
+            {
+                Image image = value.image;
+                Thumbnail thumb = image.thumbnail;
+                headlines.Add(new newsItem(value.name, value.url, thumb.contentUrl, value.description));
+            }
+            return headlines;
+        }
+
+        static async Task<newsItems> GetSentiment(newsItems headlines)
+        {
+            var client = new HttpClient();
+            var queryString = HttpUtility.ParseQueryString(string.Empty);
+
+            // Request headers
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", TEXTANALYTICS_KEY);
+
+            var uri = "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment?" + queryString;
+
+            HttpResponseMessage response;
+
+            // Request body. Insert your text data here in JSON format.
+            // thank you https://text-analytics-demo.azurewebsites.net/Home/SampleCode
+            string mybody1 = "{\"documents\":[";
+            string mybody2 = "]}";
+            string headlineBody = "";
+            foreach (newsItem headline in headlines.NewsItems)
+            {
+                headlineBody += "{\"id\":\""+ headline.ID +"\",\"text\":\""+ headline.Title + " " + headline.Content + "\"},";
+                //headlineBody += "{\"id\":\"" + headline.ID + "\",\"text\":\"" + headline.Title + "\"},";
+
+            }
+            string finalBody = mybody1 + headlineBody + mybody2;
+            //Console.WriteLine(finalBody);
+            byte[] byteData = Encoding.UTF8.GetBytes(finalBody);
+
+            using (var content = new ByteArrayContent(byteData))
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                response = await client.PostAsync(uri, content);
+            }
+            string output = await response.Content.ReadAsStringAsync();
+            dynamic jsonObj = JsonConvert.DeserializeObject<dynamic>(output);
+            var value = jsonObj.documents;
+
+            foreach (var data in value)
+            {
+                foreach (newsItem item in headlines.NewsItems)
+                {
+                    if (data.id == item.ID)
+                    {
+                        item.Sentiment = data.score;
+                    }
+                }
+            }
+            return headlines;
+
+        }
+    }
+}
