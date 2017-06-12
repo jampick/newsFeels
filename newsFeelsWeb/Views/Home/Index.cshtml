@@ -8,6 +8,9 @@
     double badRating = 0;
     var imageSrc = "";
     var imageSize = 0;
+
+    var providers = this.ViewBag.providers as Dictionary<string, List<double>>;
+    var categories = this.ViewBag.categories as Dictionary<string, List<double>>;
 }
 
 <script type="text/javascript" src="~/Scripts/fusioncharts.js"></script>
@@ -229,15 +232,17 @@ FusionCharts.ready(function () {
                     "yAxisName": "NewsFeel-o-meter",
                     "showValues": "0",
                     "theme": "ocean",
-
+                    "trendValueBorderThickness": "3"
                     //Cosmetics
 
                 },
 
                 "data": [
 @{
+    List<double> sentimentAverages = new List<double>();
     foreach (var item in sentimentHistory.OrderBy(c => c.Key))
     {
+        sentimentAverages.Add(item.Value.Average());
 
         if (DateTime.Now.ToShortDateString() == item.Key.ToShortDateString())
         {
@@ -249,27 +254,51 @@ FusionCharts.ready(function () {
                         </text>
 
                     }
-                    else
-                    {
+        else
+        {
                         <text>
                         {
                             "label": "@item.Key.ToShortDateString()",
                             "value": "@Math.Round(item.Value.Average(), 0)"
                         },
                         </text>
-                    }  // end of else
-            } // end of foreach
+        }  // end of else
+    } // end of foreach
+    try
+    {
+        ViewBag.SearchFilterAvg = Math.Round(sentimentAverages.Average(), 0);
+    }
+    catch (Exception e)
+    {
+        ViewBag.SearchFilterAvg = null;
+        System.Diagnostics.Debug.Write("warning: " + e.InnerException);
+    }
 }
                 ],
                 "trendlines": [{
-                    "line": [{
+                    "line": [
+                        {
                         "startvalue": "@ViewBag.YTD",
                         "color": "#1aaf5d",
-                        "displayvalue": "YTD avg{br}@ViewBag.YTD",
+                        "displayvalue": "All: @ViewBag.YTD",
                         "valueOnRight": "1",
                         "thickness": "2"
-                    }]
-                }]
+                        },
+@if (ViewBag.SearchFilter != null && ViewBag.SearchFilterAvg != null) {
+                        <text>
+                                {
+                "startvalue": "@ViewBag.SearchFilterAvg",
+                        "color": "#1aaf5d",
+                        "displayvalue": "@ViewBag.SearchFilter: @ViewBag.SearchFilterAvg",
+                        "valueOnRight": "0",
+                        "thickness": "2",
+                        "dashed" : "1"
+                        },
+                       </text>
+    }
+                    ],
+                 }]
+
             }
         }
     );
@@ -308,20 +337,22 @@ FusionCharts.ready(function () {
     </div>
 
     <!--filters here-->
-    @{
-        var providers = this.ViewBag.providers as Dictionary<string, List<double>>;
-        var categories = this.ViewBag.categories as Dictionary<string, List<double>>;
-    }
     <div class="row">
         <div class="col-md-12">
             <div class="list-group">
 
-                Sources: @Html.ActionLink("All", "Index", "Home") <span class="badge">@Math.Round(ViewBag.allSentimentAverage, 0)%</span>
+                Sources: @Html.ActionLink("All", "Index", "Home") <span class="badge">@Math.Round(ViewBag.allSentimentAverage, 0)</span>
                 @{
                     foreach (var item in providers)
                     {
-                        <a href="/home/index?providerSearch=@item.Key">@item.Key <span class="badge">@Math.Round(@item.Value.Average(), 0)%</span></a>
-                        //@Html.ActionLink(@item.Key, "Index", "Home", new { @providerSearch = @item.Key }, null) <span class="badge">@item.Value</span>
+                        if (ViewBag.SearchFilter == item.Key)
+                        {
+                            <a href="/home/index?providerSearch=@item.Key"><span class="btn btn-success success"> @item.Key</span> <span class="badge">@Math.Round(@item.Value.Average(), 0)</span></a>
+                        }
+                        else
+                        {
+                            <a href="/home/index?providerSearch=@item.Key">@item.Key <span class="badge">@Math.Round(@item.Value.Average(), 0)</span></a>
+                        }
                     }
                 }
             </div>
@@ -330,11 +361,18 @@ FusionCharts.ready(function () {
     <div class="row">
         <div class="col-md-12">
             <div class="list-group">
-                Categories: @Html.ActionLink("All", "Index", "Home") <span class="badge">@Math.Round(ViewBag.allSentimentAverage, 0)%</span>
+                Categories: @Html.ActionLink("All", "Index", "Home") <span class="badge">@Math.Round(ViewBag.allSentimentAverage, 0)</span>
                 @{
                     foreach (var item in categories)
                     {
-                        <a href="/home/index?categorySearch=@item.Key">@item.Key <span class="badge">@Math.Round(@item.Value.Average(), 0)%</span></a>
+                        if (ViewBag.SearchFilter == item.Key)
+                        {
+                            <a href="/home/index?categorySearch=@item.Key"><span class="btn btn-success success"> @item.Key</span> <span class="badge">@Math.Round(@item.Value.Average(), 0)</span></a>
+                        }
+                        else
+                        {
+                            <a href="/home/index?categorySearch=@item.Key">@item.Key <span class="badge">@Math.Round(@item.Value.Average(), 0)</span></a>
+                        }
                     }
                 }
             </div>

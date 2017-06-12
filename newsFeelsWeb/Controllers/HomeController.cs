@@ -74,13 +74,16 @@ namespace newsFeelsWeb.Controllers
                  .Where(d => d.PartitionKey == "newsFeels"
                         && d.DatePublished >= startDate);
 
+            ViewBag.SearchFilter = null;
             if (!String.IsNullOrEmpty(providerSearch))
             {
                 query = query.Where(d => d.Provider == providerSearch);
+                ViewBag.SearchFilter = providerSearch;
             }
             if (!String.IsNullOrEmpty(categorySearch))
             {
                 query = query.Where(d => d.Category == categorySearch);
+                ViewBag.SearchFilter = categorySearch;
             }
 
             #region getNewsHistory
@@ -112,7 +115,6 @@ namespace newsFeelsWeb.Controllers
             #endregion
 
             query = query.Where(d => d.DatePublished >= lastX);
-
             var newsItems = query.ToList();
 
             var sortedData = newsItems.OrderByDescending(c => c.Sentiment).ToList();
