@@ -31,7 +31,6 @@ namespace feeler
             newsItems headlines = new newsItems();
             string thisStoryCount = MAXSTORYCOUNT;
 
-            
             try
             {
                 if (args[0] != "") { thisStoryCount = args[0]; }

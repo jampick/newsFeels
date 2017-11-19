@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("DBArchiver")]
+[assembly: AssemblyTitle("DBArchiver2")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("DBArchiver")]
+[assembly: AssemblyProduct("DBArchiver2")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a28be904-ae33-4bf2-a7f9-5ce85e41674e")]
+[assembly: Guid("1f1117fe-21a0-4f19-bb4a-43ad2e5a281b")]
 
 // Version information for an assembly consists of the following four values:
 //
